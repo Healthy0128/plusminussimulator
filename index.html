@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【軌跡つき】正負の数・向きと歩き方シミュレーター (±20版)</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            text-align: center;
+            padding: 40px 20px;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        .container {
+            max-width: 750px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h2 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 22px;
+        }
+        .description {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+        }
+        .number-line {
+            position: relative;
+            width: 100%;
+            margin: 60px auto;
+            height: 4px;
+            background: #2c3e50;
+        }
+        /* 軌跡の弧を描くためのキャンバス */
+        .arc-container {
+            position: absolute;
+            bottom: 10px; /* 数直線のすぐ上に配置 */
+            left: 0;
+            width: 100%;
+            height: 120px;
+            pointer-events: none;
+            overflow: visible;
+            z-index: 1;
+        }
+        .tick {
+            position: absolute;
+            width: 2px;
+            height: 14px;
+            background: #2c3e50;
+            top: -5px;
+        }
+        .label {
+            position: absolute;
+            top: 22px;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: bold;
+            color: #34495e;
+            white-space: nowrap;
+        }
+        .marker {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px; 
+            height: 50px;
+            font-size: 40px;
+            top: -25px;
+            transition: left 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
+                        transform 0.4s ease-in-out;
+            z-index: 2;
+            /* 修正点：絵文字は元々「左」を向いているので、デフォルトで反転させて「右向き（加法）」にする */
+            transform: translateX(-50%) scaleX(-1);
+        }
+        /* 修正点：減法の時は反転を解除して元の「左向き」に戻す */
+        .marker.flipped {
+            transform: translateX(-50%) scaleX(1);
+        }
+        .controls {
+            margin-top: 50px;
+            background: #fafbfc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+            text-align: left;
+        }
+        .control-group {
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+        }
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+        .control-group label {
+            width: 140px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #47525d;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            margin: 0 15px;
+        }
+        .radio-options {
+            display: flex;
+            gap: 20px;
+        }
+        .radio-options label {
+            width: auto;
+            font-weight: normal;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .value-display {
+            display: inline-block;
+            width: 45px;
+            text-align: right;
+            font-weight: bold;
+            color: #2980b9;
+        }
+        .formula {
+            font-size: 32px;
+            margin-top: 35px;
+            font-weight: bold;
+            color: #2c3e50;
+            padding: 20px;
+            background: #eef2f5;
+            border-radius: 8px;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>正負の数 シミュレーター (±20版)</h2>
+        <div class="description">
+            演算子（加法・減法）＝ 体の向き ／ 符号（正・負）＝ 歩き方（前進・後退）
+        </div>
+        
+        <div class="number-line" id="line">
+            <!-- 軌跡を描画するSVGを追加 -->
+            <svg id="arc-svg" class="arc-container">
+                <defs>
+                    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                        <polygon points="0 0, 6 3, 0 6" fill="#e74c3c" />
+                    </marker>
+                </defs>
+                <path id="jump-arc" d="" fill="transparent" stroke="#e74c3c" stroke-width="3" stroke-dasharray="6,6" marker-end="url(#arrowhead)" />
+            </svg>
+            <div class="marker" id="marker">🚶‍♂️</div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>① スタートの数:</label>
+                <input type="range" id="start" min="-20" max="20" value="5" oninput="update()">
+                <span class="value-display" id="start-val">+5</span>
+            </div>
+            
+            <div class="control-group">
+                <label>② 計算の種類:</label>
+                <div class="radio-options">
+                    <label><input type="radio" name="operator" value="+" checked onchange="update()"> 加法（ ＋ ）</label>
+                    <label><input type="radio" name="operator" value="-" onchange="update()"> 減法（ － ）</label>
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <label>③ 続く数:</label>
+                <input type="range" id="sub" min="-20" max="20" value="-5" oninput="update()">
+                <span class="value-display" id="sub-val">-5</span>
+            </div>
+        </div>
+
+        <div class="formula" id="formula">(+5) + (-5) = 0</div>
+    </div>
+
+    <script>
+        const line = document.getElementById('line');
+        const marker = document.getElementById('marker');
+        const startSlider = document.getElementById('start');
+        const subSlider = document.getElementById('sub');
+        const formula = document.getElementById('formula');
+        const startVal = document.getElementById('start-val');
+        const subVal = document.getElementById('sub-val');
+        const jumpArc = document.getElementById('jump-arc');
+
+        function formatSign(num) {
+            if (num > 0) return "+" + num;
+            if (num === 0) return "0";
+            return num.toString();
+        }
+
+        // 数直線の目盛りを生成
+        for (let i = -20; i <= 20; i++) {
+            let tick = document.createElement('div');
+            tick.className = 'tick';
+            tick.style.left = ((i + 20) / 40 * 100) + '%';
+            
+            let label = document.createElement('div');
+            label.className = 'label';
+            label.style.left = ((i + 20) / 40 * 100) + '%';
+            label.innerText = formatSign(i);
+            
+            line.appendChild(tick);
+            if (i % 2 === 0) {
+                line.appendChild(label);
+            }
+        }
+
+        function update() {
+            const start = parseInt(startSlider.value);
+            const sub = parseInt(subSlider.value);
+            const operator = document.querySelector('input[name="operator"]:checked').value;
+            
+            const result = (operator === '+') ? (start + sub) : (start - sub);
+
+            startVal.innerText = formatSign(start);
+            subVal.innerText = formatSign(sub);
+            formula.innerText = `(${formatSign(start)}) ${operator} (${formatSign(sub)}) = ${formatSign(result)}`;
+
+            // 【修正完了】体の向きの制御（加法＝右、減法＝左）
+            if (operator === '-') {
+                marker.classList.add('flipped');
+            } else {
+                marker.classList.remove('flipped');
+            }
+
+            // マーカー位置の移動
+            const visualResult = Math.max(-20, Math.min(20, result));
+            marker.style.left = ((visualResult + 20) / 40 * 100) + '%';
+
+            // --- 追加：スタートからゴールへの軌跡（弧）の描画 ---
+            const lineRect = line.getBoundingClientRect();
+            const startPx = ((start + 20) / 40) * lineRect.width;
+            const endPx = ((visualResult + 20) / 40) * lineRect.width;
+
+            if (startPx === endPx) {
+                jumpArc.setAttribute('d', ''); // 動かない場合は線を消す
+            } else {
+                const y = 115; // 数直線の少し上（SVG内の座標）
+                const midX = (startPx + endPx) / 2;
+                const dist = Math.abs(endPx - startPx);
+                const height = Math.min(dist * 0.4, 100); // 距離に合わせて弧の高さを調整
+                const midY = y - height;
+
+                // スタート地点からゴール地点への曲線を描画
+                jumpArc.setAttribute('d', `M ${startPx} ${y} Q ${midX} ${midY} ${endPx} ${y}`);
+            }
+        }
+
+        // 初期化と、画面サイズ変更時に弧を引き直す処理
+        update();
+        window.addEventListener('resize', update);
+    </script>
+</body>
+</html>
