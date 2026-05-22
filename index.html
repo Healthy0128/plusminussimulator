@@ -69,7 +69,6 @@
         .description { font-size: 14px; color: #64748b; margin-bottom: 40px; }
         .number-line { position: relative; width: 100%; margin: 80px auto 60px auto; height: 4px; background: #cbd5e1; border-radius: 2px; }
         .arc-container { position: absolute; bottom: 10px; left: 0; width: 100%; height: 120px; pointer-events: none; overflow: visible; z-index: 1; }
-        /* 矢印の軌跡用パス */
         #jump-arc {
             fill: transparent;
             stroke: #ef4444;
@@ -112,6 +111,7 @@
             width: 90px; color: white; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
             animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            position: relative; /* D&D用 */
         }
         @keyframes popIn {
             0% { transform: scale(0.5); opacity: 0; }
@@ -120,6 +120,11 @@
         }
         .plate:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .plate:active { transform: scale(0.95); }
+        
+        /* ドラッグ可能時のカーソル設定 */
+        .plate.draggable { cursor: grab; }
+        .plate.draggable:active { cursor: grabbing; }
+
         .plate.positive { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         .plate.negative { background: linear-gradient(135deg, #f43f5e, #e11d48); }
         
@@ -190,7 +195,7 @@
 
     <div id="tab-plates" class="tab-content">
         <h2>正負の数 合成シミュレーター</h2>
-        <div class="description">プレートをタップして実験台へ。交換法則や結合法則を確かめよう</div>
+        <div class="description">プレートをタップして実験台へ。ドラッグして並べ替えてみよう</div>
 
         <div class="plate-area">
             <h3>🧪 素材プレート置き場 <span style="font-size: 0.9rem; font-weight: normal; color: #64748b;">(タップで下へ追加)</span></h3>
@@ -198,7 +203,7 @@
         </div>
 
         <div class="plate-area active-area">
-            <h3>🔬 合成実験台 <span style="font-size: 0.9rem; font-weight: normal; color: #16a34a;">(タップで上へ戻す)</span></h3>
+            <h3>🔬 合成実験台 <span style="font-size: 0.9rem; font-weight: normal; color: #16a34a;">(ドラッグで並べ替え / タップで戻す)</span></h3>
             <div id="active-container" class="plate-container"></div>
         </div>
 
@@ -212,9 +217,7 @@
 </div>
 
 <script>
-    /* =========================================
-       パーティクル（紙吹雪）エフェクト機能
-       ========================================= */
+    // --- パーティクルエフェクト ---
     function spawnParticles(x, y, color) {
         for (let i = 0; i < 12; i++) {
             const p = document.createElement('div');
@@ -244,9 +247,7 @@
         }
     }
 
-    /* =========================================
-       タブ切り替えのロジック
-       ========================================= */
+    // --- タブ切り替え ---
     function switchTab(tabId, btnElement) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
@@ -257,9 +258,7 @@
         if (tabId === 'tab-walk') updateLine();
     }
 
-    /* =========================================
-       シミュレーター1 (数直線) のロジック
-       ========================================= */
+    // --- シミュレーター1 (数直線) ---
     const line = document.getElementById('line');
     const marker = document.getElementById('marker');
     const startSlider = document.getElementById('start');
@@ -275,7 +274,6 @@
         return num.toString();
     }
 
-    // 目盛りの生成
     for (let i = -20; i <= 20; i++) {
         let tick = document.createElement('div');
         tick.className = `tick ${i % 5 === 0 ? 'main-tick' : ''}`;
@@ -323,19 +321,15 @@
             const height = Math.min(dist * 0.45, 120);
             const midY = y - height;
             
-            // 弧のパスを設定
             jumpArc.setAttribute('d', `M ${startPx} ${y} Q ${midX} ${midY} ${endPx} ${y}`);
             
-            // 弧を「描画」するアニメーション
             const length = jumpArc.getTotalLength();
             jumpArc.style.transition = 'none';
             jumpArc.style.strokeDasharray = length + ' ' + length;
             jumpArc.style.strokeDashoffset = length;
-            jumpArc.getBoundingClientRect(); // リフロー強制
+            jumpArc.getBoundingClientRect(); 
             jumpArc.style.transition = 'stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
             jumpArc.style.strokeDashoffset = '0';
-            
-            // 矢印も表示
             jumpArc.setAttribute('marker-end', 'url(#arrowhead)');
         }
     }
@@ -343,14 +337,13 @@
     window.addEventListener('resize', updateLine);
     updateLine(); 
 
-    /* =========================================
-       シミュレーター2 (プレート合成) のロジック
-       ========================================= */
+    // --- シミュレーター2 (プレート合成) ---
     let availablePlates = [
         { id: 1, val: 3 }, { id: 2, val: -5 }, { id: 3, val: 7 },
         { id: 4, val: -2 }, { id: 5, val: 1 }, { id: 6, val: -4 }
     ];
     let activePlates = [];
+    let draggedPlateIndex = null; // D&D用のインデックス保持
 
     const availableContainer = document.getElementById('available-container');
     const activeContainer = document.getElementById('active-container');
@@ -378,11 +371,12 @@
     function createPlateElement(plate, isAvailable) {
         const div = document.createElement('div');
         div.className = `plate ${plate.val >= 0 ? 'positive' : 'negative'}`;
+        if (!isAvailable) div.classList.add('draggable');
         
+        // --- タップで移動 ---
         div.onclick = (e) => {
             if (e.target.tagName.toLowerCase() === 'input') return; 
             
-            // パーティクル発生
             const rect = div.getBoundingClientRect();
             const color = plate.val >= 0 ? '#3b82f6' : '#f43f5e';
             spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, color);
@@ -394,9 +388,55 @@
                 activePlates = activePlates.filter(p => p.id !== plate.id);
                 availablePlates.push(plate);
             }
-            // 少し遅延を入れて再描画することでアニメーションをリセット
             setTimeout(renderPlates, 10);
         };
+
+        // --- ★追加：ドラッグ＆ドロップで並べ替え ---
+        if (!isAvailable) {
+            div.draggable = true;
+            div.title = "ドラッグで順番を入れ替え";
+
+            div.addEventListener('dragstart', (e) => {
+                draggedPlateIndex = activePlates.indexOf(plate);
+                setTimeout(() => div.style.opacity = '0.3', 0); // ドラッグ元を半透明に
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            div.addEventListener('dragover', (e) => {
+                e.preventDefault(); // ドロップを許可
+                e.dataTransfer.dropEffect = 'move';
+                div.style.transform = 'scale(1.1)'; // マウスが乗った要素を少し大きく
+            });
+
+            div.addEventListener('dragleave', (e) => {
+                div.style.transform = '';
+            });
+
+            div.addEventListener('dragend', () => {
+                div.style.opacity = '1';
+                div.style.transform = '';
+                draggedPlateIndex = null;
+            });
+
+            div.addEventListener('drop', (e) => {
+                e.preventDefault();
+                div.style.transform = '';
+                if (draggedPlateIndex === null) return;
+                
+                const targetIndex = activePlates.indexOf(plate);
+                if (draggedPlateIndex !== targetIndex) {
+                    // 配列の順序を入れ替える（スワップまたは挿入）
+                    const movedPlate = activePlates.splice(draggedPlateIndex, 1)[0];
+                    activePlates.splice(targetIndex, 0, movedPlate);
+                    
+                    // 入れ替え成功時に黄色いパーティクルを出す
+                    const rect = div.getBoundingClientRect();
+                    spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#fbbf24');
+                    
+                    renderPlates();
+                }
+            });
+        }
 
         const valDiv = document.createElement('div');
         valDiv.className = 'plate-val';
@@ -429,7 +469,6 @@
         activePlates.forEach((p, index) => {
             sum += p.val;
             let displayVal = p.val < 0 ? `(${p.val})` : p.val;
-            // 項が追加された時にふわりと現れるアニメーションを適用
             formulaHtml += `<span style="display:inline-block; animation: popIn 0.3s forwards;">${displayVal}</span>`;
             
             if (index < activePlates.length - 1) {
