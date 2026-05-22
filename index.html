@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【アニメーション追加】正負の数 統合シミュレーター</title>
+    <title>【0は灰色】正負の数 統合シミュレーター</title>
     <style>
         /* =========================================
            全体・タブ用のスタイル
@@ -110,23 +110,19 @@
             padding: 15px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; 
             width: 90px; color: white; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
             box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-            position: relative; /* D&D用 */
+            position: relative; 
         }
-        @keyframes popIn {
-            0% { transform: scale(0.5); opacity: 0; }
-            80% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
+
         .plate:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .plate:active { transform: scale(0.95); }
         
-        /* ドラッグ可能時のカーソル設定 */
         .plate.draggable { cursor: grab; }
         .plate.draggable:active { cursor: grabbing; }
 
+        /* ★追加・修正：正、負、ゼロの色分け */
         .plate.positive { background: linear-gradient(135deg, #3b82f6, #2563eb); }
         .plate.negative { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+        .plate.zero { background: linear-gradient(135deg, #94a3b8, #64748b); } /* 0は灰色 */
         
         .plate-val { font-size: 2.2rem; font-weight: 900; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .plate input { 
@@ -340,10 +336,10 @@
     // --- シミュレーター2 (プレート合成) ---
     let availablePlates = [
         { id: 1, val: 3 }, { id: 2, val: -5 }, { id: 3, val: 7 },
-        { id: 4, val: -2 }, { id: 5, val: 1 }, { id: 6, val: -4 }
+        { id: 4, val: 0 }, { id: 5, val: 1 }, { id: 6, val: -4 } // 初期値にも0を1つ入れてみました
     ];
     let activePlates = [];
-    let draggedPlateIndex = null; // D&D用のインデックス保持
+    let draggedPlateIndex = null; 
 
     const availableContainer = document.getElementById('available-container');
     const activeContainer = document.getElementById('active-container');
@@ -370,7 +366,13 @@
 
     function createPlateElement(plate, isAvailable) {
         const div = document.createElement('div');
-        div.className = `plate ${plate.val >= 0 ? 'positive' : 'negative'}`;
+        
+        // ★修正：0の場合はクラスを 'zero' にする
+        let colorClass = 'zero';
+        if (plate.val > 0) colorClass = 'positive';
+        else if (plate.val < 0) colorClass = 'negative';
+        div.className = `plate ${colorClass}`;
+        
         if (!isAvailable) div.classList.add('draggable');
         
         // --- タップで移動 ---
@@ -378,8 +380,13 @@
             if (e.target.tagName.toLowerCase() === 'input') return; 
             
             const rect = div.getBoundingClientRect();
-            const color = plate.val >= 0 ? '#3b82f6' : '#f43f5e';
-            spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, color);
+            
+            // ★修正：0の場合はパーティクルも灰色にする
+            let particleColor = '#94a3b8';
+            if (plate.val > 0) particleColor = '#3b82f6';
+            else if (plate.val < 0) particleColor = '#f43f5e';
+            
+            spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, particleColor);
 
             if (isAvailable) {
                 availablePlates = availablePlates.filter(p => p.id !== plate.id);
@@ -388,24 +395,24 @@
                 activePlates = activePlates.filter(p => p.id !== plate.id);
                 availablePlates.push(plate);
             }
-            setTimeout(renderPlates, 10);
+            renderPlates();
         };
 
-        // --- ★追加：ドラッグ＆ドロップで並べ替え ---
+        // --- ドラッグ＆ドロップで並べ替え ---
         if (!isAvailable) {
             div.draggable = true;
             div.title = "ドラッグで順番を入れ替え";
 
             div.addEventListener('dragstart', (e) => {
                 draggedPlateIndex = activePlates.indexOf(plate);
-                setTimeout(() => div.style.opacity = '0.3', 0); // ドラッグ元を半透明に
+                setTimeout(() => div.style.opacity = '0.3', 0); 
                 e.dataTransfer.effectAllowed = 'move';
             });
 
             div.addEventListener('dragover', (e) => {
-                e.preventDefault(); // ドロップを許可
+                e.preventDefault(); 
                 e.dataTransfer.dropEffect = 'move';
-                div.style.transform = 'scale(1.1)'; // マウスが乗った要素を少し大きく
+                div.style.transform = 'scale(1.1)'; 
             });
 
             div.addEventListener('dragleave', (e) => {
@@ -425,13 +432,11 @@
                 
                 const targetIndex = activePlates.indexOf(plate);
                 if (draggedPlateIndex !== targetIndex) {
-                    // 配列の順序を入れ替える（スワップまたは挿入）
                     const movedPlate = activePlates.splice(draggedPlateIndex, 1)[0];
                     activePlates.splice(targetIndex, 0, movedPlate);
                     
-                    // 入れ替え成功時に黄色いパーティクルを出す
                     const rect = div.getBoundingClientRect();
-                    spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#fbbf24');
+                    spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#fbbf24'); 
                     
                     renderPlates();
                 }
@@ -469,7 +474,7 @@
         activePlates.forEach((p, index) => {
             sum += p.val;
             let displayVal = p.val < 0 ? `(${p.val})` : p.val;
-            formulaHtml += `<span style="display:inline-block; animation: popIn 0.3s forwards;">${displayVal}</span>`;
+            formulaHtml += `<span>${displayVal}</span>`;
             
             if (index < activePlates.length - 1) {
                 formulaHtml += `<span class="operator-plus">+</span>`;
@@ -477,7 +482,7 @@
         });
 
         formulaHtml += `<span class="operator-equal">=</span>`;
-        formulaHtml += `<span class="final-sum" style="display:inline-block; animation: popIn 0.5s forwards;">${sum}</span>`;
+        formulaHtml += `<span class="final-sum">${sum}</span>`;
         
         resultFormula.innerHTML = formulaHtml;
     }
