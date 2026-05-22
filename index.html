@@ -3,159 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【軌跡つき】正負の数・向きと歩き方シミュレーター (±20版)</title>
+    <title>【アニメーション追加】正負の数 統合シミュレーター</title>
     <style>
+        /* =========================================
+           全体・タブ用のスタイル
+           ========================================= */
         body {
             font-family: 'Helvetica Neue', Arial, sans-serif;
             text-align: center;
-            padding: 40px 20px;
-            background-color: #f4f6f9;
+            padding: 20px;
+            background-color: #f0f4f8;
             color: #333;
+            margin: 0;
+            overflow-x: hidden;
         }
-        .container {
-            max-width: 750px;
+        .main-container {
+            max-width: 850px;
             margin: 0 auto;
             background: white;
-            padding: 40px 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            overflow: hidden;
         }
-        h2 {
-            margin-bottom: 10px;
-            color: #2c3e50;
-            font-size: 22px;
+        .tabs {
+            display: flex;
+            background-color: #1e293b;
         }
-        .description {
-            font-size: 14px;
-            color: #7f8c8d;
-            margin-bottom: 40px;
-        }
-        .number-line {
-            position: relative;
-            width: 100%;
-            margin: 60px auto;
-            height: 4px;
-            background: #2c3e50;
-        }
-        /* 軌跡の弧を描くためのキャンバス */
-        .arc-container {
-            position: absolute;
-            bottom: 10px; /* 数直線のすぐ上に配置 */
-            left: 0;
-            width: 100%;
-            height: 120px;
-            pointer-events: none;
-            overflow: visible;
-            z-index: 1;
-        }
-        .tick {
-            position: absolute;
-            width: 2px;
-            height: 14px;
-            background: #2c3e50;
-            top: -5px;
-        }
-        .label {
-            position: absolute;
-            top: 22px;
-            transform: translateX(-50%);
-            font-size: 11px;
+        .tab-button {
+            flex: 1;
+            padding: 18px;
+            font-size: 16px;
             font-weight: bold;
-            color: #34495e;
-            white-space: nowrap;
-        }
-        .marker {
-            position: absolute;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 50px; 
-            height: 50px;
-            font-size: 40px;
-            top: -25px;
-            transition: left 0.8s cubic-bezier(0.25, 1, 0.5, 1), 
-                        transform 0.4s ease-in-out;
-            z-index: 2;
-            /* 修正点：絵文字は元々「左」を向いているので、デフォルトで反転させて「右向き（加法）」にする */
-            transform: translateX(-50%) scaleX(-1);
-        }
-        /* 修正点：減法の時は反転を解除して元の「左向き」に戻す */
-        .marker.flipped {
-            transform: translateX(-50%) scaleX(1);
-        }
-        .controls {
-            margin-top: 50px;
-            background: #fafbfc;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e1e8ed;
-            text-align: left;
-        }
-        .control-group {
-            margin-bottom: 18px;
-            display: flex;
-            align-items: center;
-        }
-        .control-group:last-child {
-            margin-bottom: 0;
-        }
-        .control-group label {
-            width: 140px;
-            font-size: 15px;
-            font-weight: bold;
-            color: #47525d;
-        }
-        input[type="range"] {
-            flex-grow: 1;
-            margin: 0 15px;
-        }
-        .radio-options {
-            display: flex;
-            gap: 20px;
-        }
-        .radio-options label {
-            width: auto;
-            font-weight: normal;
+            color: #94a3b8;
+            background: none;
+            border: none;
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
         }
-        .value-display {
-            display: inline-block;
-            width: 45px;
-            text-align: right;
-            font-weight: bold;
-            color: #2980b9;
+        .tab-button:hover {
+            background-color: #334155;
+            color: white;
         }
-        .formula {
-            font-size: 32px;
-            margin-top: 35px;
-            font-weight: bold;
-            color: #2c3e50;
-            padding: 20px;
-            background: #eef2f5;
-            border-radius: 8px;
-            letter-spacing: 1px;
+        .tab-button.active {
+            background-color: white;
+            color: #0f172a;
         }
+        .tab-content {
+            display: none;
+            padding: 40px 30px;
+            animation: fadeIn 0.4s ease-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =========================================
+           シミュレーター1：数直線
+           ========================================= */
+        h2 { margin-top: 0; margin-bottom: 10px; color: #0f172a; font-size: 24px; }
+        .description { font-size: 14px; color: #64748b; margin-bottom: 40px; }
+        .number-line { position: relative; width: 100%; margin: 80px auto 60px auto; height: 4px; background: #cbd5e1; border-radius: 2px; }
+        .arc-container { position: absolute; bottom: 10px; left: 0; width: 100%; height: 120px; pointer-events: none; overflow: visible; z-index: 1; }
+        /* 矢印の軌跡用パス */
+        #jump-arc {
+            fill: transparent;
+            stroke: #ef4444;
+            stroke-width: 4;
+            stroke-dasharray: 8, 6;
+            stroke-linecap: round;
+        }
+        .tick { position: absolute; width: 2px; height: 16px; background: #94a3b8; top: -6px; border-radius: 2px; }
+        .tick.main-tick { height: 24px; top: -10px; background: #64748b; }
+        .label { position: absolute; top: 25px; transform: translateX(-50%); font-size: 12px; font-weight: bold; color: #475569; white-space: nowrap; }
+        .marker { 
+            position: absolute; display: flex; align-items: center; justify-content: center; 
+            width: 50px; height: 50px; font-size: 45px; top: -35px; 
+            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s ease-in-out; 
+            z-index: 2; transform: translateX(-50%) scaleX(-1);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .marker.flipped { transform: translateX(-50%) scaleX(1); }
+        
+        .controls { margin-top: 30px; background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: left; }
+        .control-group { margin-bottom: 20px; display: flex; align-items: center; }
+        .control-group:last-child { margin-bottom: 0; }
+        .control-group label { width: 140px; font-size: 15px; font-weight: bold; color: #334155; }
+        input[type="range"] { flex-grow: 1; margin: 0 20px; accent-color: #3b82f6; cursor: pointer; }
+        .radio-options { display: flex; gap: 25px; }
+        .radio-options label { font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #475569; }
+        .value-display { display: inline-block; width: 50px; text-align: right; font-size: 18px; font-weight: 900; color: #2563eb; background: #eff6ff; padding: 4px 8px; border-radius: 6px; }
+        .formula { font-size: 34px; margin-top: 35px; font-weight: 900; color: #0f172a; padding: 25px; background: #f1f5f9; border-radius: 12px; letter-spacing: 2px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+
+        /* =========================================
+           シミュレーター2：プレート合成
+           ========================================= */
+        .plate-area { background-color: #f8fafc; border: 2px solid #e2e8f0; padding: 25px; border-radius: 16px; margin-bottom: 25px; text-align: left; min-height: 160px; transition: all 0.3s ease; }
+        .plate-area.active-area { background-color: #f0fdf4; border: 3px dashed #86efac; }
+        .plate-area h3 { margin-top: 0; color: #334155; font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .plate-container { display: flex; gap: 15px; flex-wrap: wrap; }
+        
+        .plate { 
+            padding: 15px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; 
+            width: 90px; color: white; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .plate:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .plate:active { transform: scale(0.95); }
+        .plate.positive { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .plate.negative { background: linear-gradient(135deg, #f43f5e, #e11d48); }
+        
+        .plate-val { font-size: 2.2rem; font-weight: 900; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .plate input { 
+            width: 65px; margin-top: 15px; text-align: center; font-size: 1.1rem; font-weight: bold; 
+            padding: 6px; border: none; border-radius: 6px; background: rgba(255,255,255,0.9); color: #0f172a;
+            transition: background 0.2s;
+        }
+        .plate input:focus { outline: 2px solid #fff; background: #fff; }
+        
+        .empty-msg { color: #94a3b8; font-weight: bold; width: 100%; text-align: center; padding: 30px 0; font-size: 1.1rem; border: 2px dashed #cbd5e1; border-radius: 12px; }
+        
+        .result-panel { background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 40px 30px; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
+        .result-panel::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); pointer-events: none; }
+        .result-panel h3 { margin: 0 0 25px 0; color: #94a3b8; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; }
+        .result-formula { font-size: 3.5rem; font-weight: 900; word-break: break-all; line-height: 1.2; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .operator-plus { color: #64748b; margin: 0 12px; font-size: 2.5rem; vertical-align: middle; }
+        .operator-equal { color: #38bdf8; margin: 0 20px; }
+        .final-sum { color: #38bdf8; font-size: 4.5rem; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+<div class="main-container">
+    <div class="tabs">
+        <button class="tab-button active" onclick="switchTab('tab-walk', this)">🚶‍♂️ 歩き方シミュレーター</button>
+        <button class="tab-button" onclick="switchTab('tab-plates', this)">🧪 プレート合成シミュレーター</button>
+    </div>
+
+    <div id="tab-walk" class="tab-content active">
         <h2>正負の数 シミュレーター (±20版)</h2>
-        <div class="description">
-            演算子（加法・減法）＝ 体の向き ／ 符号（正・負）＝ 歩き方（前進・後退）
-        </div>
+        <div class="description">演算子（加法・減法）＝ 体の向き ／ 符号（正・負）＝ 歩き方（前進・後退）</div>
         
         <div class="number-line" id="line">
-            <!-- 軌跡を描画するSVGを追加 -->
             <svg id="arc-svg" class="arc-container">
                 <defs>
                     <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                        <polygon points="0 0, 6 3, 0 6" fill="#e74c3c" />
+                        <polygon points="0 0, 6 3, 0 6" fill="#ef4444" />
                     </marker>
                 </defs>
-                <path id="jump-arc" d="" fill="transparent" stroke="#e74c3c" stroke-width="3" stroke-dasharray="6,6" marker-end="url(#arrowhead)" />
+                <path id="jump-arc" d="" />
             </svg>
             <div class="marker" id="marker">🚶‍♂️</div>
         </div>
@@ -163,105 +169,282 @@
         <div class="controls">
             <div class="control-group">
                 <label>① スタートの数:</label>
-                <input type="range" id="start" min="-20" max="20" value="5" oninput="update()">
+                <input type="range" id="start" min="-20" max="20" value="5" oninput="updateLine()">
                 <span class="value-display" id="start-val">+5</span>
             </div>
-            
             <div class="control-group">
                 <label>② 計算の種類:</label>
                 <div class="radio-options">
-                    <label><input type="radio" name="operator" value="+" checked onchange="update()"> 加法（ ＋ ）</label>
-                    <label><input type="radio" name="operator" value="-" onchange="update()"> 減法（ － ）</label>
+                    <label><input type="radio" name="operator" value="+" checked onchange="updateLine()"> 加法（ ＋ ）</label>
+                    <label><input type="radio" name="operator" value="-" onchange="updateLine()"> 減法（ － ）</label>
                 </div>
             </div>
-            
             <div class="control-group">
                 <label>③ 続く数:</label>
-                <input type="range" id="sub" min="-20" max="20" value="-5" oninput="update()">
+                <input type="range" id="sub" min="-20" max="20" value="-5" oninput="updateLine()">
                 <span class="value-display" id="sub-val">-5</span>
             </div>
         </div>
-
         <div class="formula" id="formula">(+5) + (-5) = 0</div>
     </div>
 
-    <script>
-        const line = document.getElementById('line');
-        const marker = document.getElementById('marker');
-        const startSlider = document.getElementById('start');
-        const subSlider = document.getElementById('sub');
-        const formula = document.getElementById('formula');
-        const startVal = document.getElementById('start-val');
-        const subVal = document.getElementById('sub-val');
-        const jumpArc = document.getElementById('jump-arc');
+    <div id="tab-plates" class="tab-content">
+        <h2>正負の数 合成シミュレーター</h2>
+        <div class="description">プレートをタップして実験台へ。交換法則や結合法則を確かめよう</div>
 
-        function formatSign(num) {
-            if (num > 0) return "+" + num;
-            if (num === 0) return "0";
-            return num.toString();
+        <div class="plate-area">
+            <h3>🧪 素材プレート置き場 <span style="font-size: 0.9rem; font-weight: normal; color: #64748b;">(タップで下へ追加)</span></h3>
+            <div id="available-container" class="plate-container"></div>
+        </div>
+
+        <div class="plate-area active-area">
+            <h3>🔬 合成実験台 <span style="font-size: 0.9rem; font-weight: normal; color: #16a34a;">(タップで上へ戻す)</span></h3>
+            <div id="active-container" class="plate-container"></div>
+        </div>
+
+        <div class="result-panel">
+            <h3>計算結果</h3>
+            <div id="result-formula" class="result-formula">
+                <span style="font-size: 1.5rem; color: #64748b; font-weight: normal;">プレートを合成するとここに式が表示されます</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* =========================================
+       パーティクル（紙吹雪）エフェクト機能
+       ========================================= */
+    function spawnParticles(x, y, color) {
+        for (let i = 0; i < 12; i++) {
+            const p = document.createElement('div');
+            p.style.position = 'fixed';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.style.width = '10px';
+            p.style.height = '10px';
+            p.style.backgroundColor = color;
+            p.style.borderRadius = '50%';
+            p.style.pointerEvents = 'none';
+            p.style.zIndex = '9999';
+            document.body.appendChild(p);
+
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * 60 + 30;
+            const tx = Math.cos(angle) * velocity;
+            const ty = Math.sin(angle) * velocity;
+
+            p.animate([
+                { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+                { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`, opacity: 0 }
+            ], {
+                duration: 500 + Math.random() * 300,
+                easing: 'cubic-bezier(0, .9, .57, 1)'
+            }).onfinish = () => p.remove();
         }
+    }
 
-        // 数直線の目盛りを生成
-        for (let i = -20; i <= 20; i++) {
-            let tick = document.createElement('div');
-            tick.className = 'tick';
-            tick.style.left = ((i + 20) / 40 * 100) + '%';
-            
+    /* =========================================
+       タブ切り替えのロジック
+       ========================================= */
+    function switchTab(tabId, btnElement) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        btnElement.classList.add('active');
+
+        if (tabId === 'tab-walk') updateLine();
+    }
+
+    /* =========================================
+       シミュレーター1 (数直線) のロジック
+       ========================================= */
+    const line = document.getElementById('line');
+    const marker = document.getElementById('marker');
+    const startSlider = document.getElementById('start');
+    const subSlider = document.getElementById('sub');
+    const formulaText = document.getElementById('formula');
+    const startVal = document.getElementById('start-val');
+    const subVal = document.getElementById('sub-val');
+    const jumpArc = document.getElementById('jump-arc');
+
+    function formatSign(num) {
+        if (num > 0) return "+" + num;
+        if (num === 0) return "0";
+        return num.toString();
+    }
+
+    // 目盛りの生成
+    for (let i = -20; i <= 20; i++) {
+        let tick = document.createElement('div');
+        tick.className = `tick ${i % 5 === 0 ? 'main-tick' : ''}`;
+        tick.style.left = ((i + 20) / 40 * 100) + '%';
+        line.appendChild(tick);
+        if (i % 5 === 0) {
             let label = document.createElement('div');
             label.className = 'label';
             label.style.left = ((i + 20) / 40 * 100) + '%';
             label.innerText = formatSign(i);
+            line.appendChild(label);
+        }
+    }
+
+    function updateLine() {
+        if (document.getElementById('tab-walk').style.display === 'none' && !document.getElementById('tab-walk').classList.contains('active')) return;
+
+        const start = parseInt(startSlider.value);
+        const sub = parseInt(subSlider.value);
+        const operator = document.querySelector('input[name="operator"]:checked').value;
+        const result = (operator === '+') ? (start + sub) : (start - sub);
+
+        startVal.innerText = formatSign(start);
+        subVal.innerText = formatSign(sub);
+        formulaText.innerText = `(${formatSign(start)}) ${operator} (${formatSign(sub)}) = ${formatSign(result)}`;
+
+        if (operator === '-') marker.classList.add('flipped');
+        else marker.classList.remove('flipped');
+
+        const visualResult = Math.max(-20, Math.min(20, result));
+        marker.style.left = ((visualResult + 20) / 40 * 100) + '%';
+
+        const lineRect = line.getBoundingClientRect();
+        if (lineRect.width === 0) return; 
+
+        const startPx = ((start + 20) / 40) * lineRect.width;
+        const endPx = ((visualResult + 20) / 40) * lineRect.width;
+
+        if (startPx === endPx) {
+            jumpArc.setAttribute('d', '');
+        } else {
+            const y = 115;
+            const midX = (startPx + endPx) / 2;
+            const dist = Math.abs(endPx - startPx);
+            const height = Math.min(dist * 0.45, 120);
+            const midY = y - height;
             
-            line.appendChild(tick);
-            if (i % 2 === 0) {
-                line.appendChild(label);
-            }
+            // 弧のパスを設定
+            jumpArc.setAttribute('d', `M ${startPx} ${y} Q ${midX} ${midY} ${endPx} ${y}`);
+            
+            // 弧を「描画」するアニメーション
+            const length = jumpArc.getTotalLength();
+            jumpArc.style.transition = 'none';
+            jumpArc.style.strokeDasharray = length + ' ' + length;
+            jumpArc.style.strokeDashoffset = length;
+            jumpArc.getBoundingClientRect(); // リフロー強制
+            jumpArc.style.transition = 'stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            jumpArc.style.strokeDashoffset = '0';
+            
+            // 矢印も表示
+            jumpArc.setAttribute('marker-end', 'url(#arrowhead)');
+        }
+    }
+
+    window.addEventListener('resize', updateLine);
+    updateLine(); 
+
+    /* =========================================
+       シミュレーター2 (プレート合成) のロジック
+       ========================================= */
+    let availablePlates = [
+        { id: 1, val: 3 }, { id: 2, val: -5 }, { id: 3, val: 7 },
+        { id: 4, val: -2 }, { id: 5, val: 1 }, { id: 6, val: -4 }
+    ];
+    let activePlates = [];
+
+    const availableContainer = document.getElementById('available-container');
+    const activeContainer = document.getElementById('active-container');
+    const resultFormula = document.getElementById('result-formula');
+
+    function renderPlates() {
+        availableContainer.innerHTML = '';
+        activeContainer.innerHTML = '';
+
+        if (availablePlates.length === 0) {
+            availableContainer.innerHTML = '<div class="empty-msg">すべてのプレートが実験台にあります</div>';
+        } else {
+            availablePlates.forEach(p => availableContainer.appendChild(createPlateElement(p, true)));
         }
 
-        function update() {
-            const start = parseInt(startSlider.value);
-            const sub = parseInt(subSlider.value);
-            const operator = document.querySelector('input[name="operator"]:checked').value;
-            
-            const result = (operator === '+') ? (start + sub) : (start - sub);
-
-            startVal.innerText = formatSign(start);
-            subVal.innerText = formatSign(sub);
-            formula.innerText = `(${formatSign(start)}) ${operator} (${formatSign(sub)}) = ${formatSign(result)}`;
-
-            // 【修正完了】体の向きの制御（加法＝右、減法＝左）
-            if (operator === '-') {
-                marker.classList.add('flipped');
-            } else {
-                marker.classList.remove('flipped');
-            }
-
-            // マーカー位置の移動
-            const visualResult = Math.max(-20, Math.min(20, result));
-            marker.style.left = ((visualResult + 20) / 40 * 100) + '%';
-
-            // --- 追加：スタートからゴールへの軌跡（弧）の描画 ---
-            const lineRect = line.getBoundingClientRect();
-            const startPx = ((start + 20) / 40) * lineRect.width;
-            const endPx = ((visualResult + 20) / 40) * lineRect.width;
-
-            if (startPx === endPx) {
-                jumpArc.setAttribute('d', ''); // 動かない場合は線を消す
-            } else {
-                const y = 115; // 数直線の少し上（SVG内の座標）
-                const midX = (startPx + endPx) / 2;
-                const dist = Math.abs(endPx - startPx);
-                const height = Math.min(dist * 0.4, 100); // 距離に合わせて弧の高さを調整
-                const midY = y - height;
-
-                // スタート地点からゴール地点への曲線を描画
-                jumpArc.setAttribute('d', `M ${startPx} ${y} Q ${midX} ${midY} ${endPx} ${y}`);
-            }
+        if (activePlates.length === 0) {
+            activeContainer.innerHTML = '<div class="empty-msg">ここにプレートを置いて式を作ります</div>';
+            resultFormula.innerHTML = '<span style="font-size: 1.5rem; color: #64748b; font-weight: normal;">プレートを合成するとここに式が表示されます</span>';
+        } else {
+            activePlates.forEach(p => activeContainer.appendChild(createPlateElement(p, false)));
+            updateFormula();
         }
+    }
 
-        // 初期化と、画面サイズ変更時に弧を引き直す処理
-        update();
-        window.addEventListener('resize', update);
-    </script>
+    function createPlateElement(plate, isAvailable) {
+        const div = document.createElement('div');
+        div.className = `plate ${plate.val >= 0 ? 'positive' : 'negative'}`;
+        
+        div.onclick = (e) => {
+            if (e.target.tagName.toLowerCase() === 'input') return; 
+            
+            // パーティクル発生
+            const rect = div.getBoundingClientRect();
+            const color = plate.val >= 0 ? '#3b82f6' : '#f43f5e';
+            spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, color);
+
+            if (isAvailable) {
+                availablePlates = availablePlates.filter(p => p.id !== plate.id);
+                activePlates.push(plate);
+            } else {
+                activePlates = activePlates.filter(p => p.id !== plate.id);
+                availablePlates.push(plate);
+            }
+            // 少し遅延を入れて再描画することでアニメーションをリセット
+            setTimeout(renderPlates, 10);
+        };
+
+        const valDiv = document.createElement('div');
+        valDiv.className = 'plate-val';
+        valDiv.innerText = plate.val;
+        div.appendChild(valDiv);
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = plate.val;
+        input.onchange = (e) => {
+            const newVal = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+            if (isAvailable) {
+                const target = availablePlates.find(p => p.id === plate.id);
+                if (target) target.val = newVal;
+            } else {
+                const target = activePlates.find(p => p.id === plate.id);
+                if (target) target.val = newVal;
+            }
+            renderPlates();
+        };
+        div.appendChild(input);
+
+        return div;
+    }
+
+    function updateFormula() {
+        let sum = 0;
+        let formulaHtml = '';
+
+        activePlates.forEach((p, index) => {
+            sum += p.val;
+            let displayVal = p.val < 0 ? `(${p.val})` : p.val;
+            // 項が追加された時にふわりと現れるアニメーションを適用
+            formulaHtml += `<span style="display:inline-block; animation: popIn 0.3s forwards;">${displayVal}</span>`;
+            
+            if (index < activePlates.length - 1) {
+                formulaHtml += `<span class="operator-plus">+</span>`;
+            }
+        });
+
+        formulaHtml += `<span class="operator-equal">=</span>`;
+        formulaHtml += `<span class="final-sum" style="display:inline-block; animation: popIn 0.5s forwards;">${sum}</span>`;
+        
+        resultFormula.innerHTML = formulaHtml;
+    }
+
+    renderPlates();
+</script>
+
 </body>
 </html>
