@@ -1,494 +1,1343 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>【0は灰色】正負の数 統合シミュレーター</title>
-    <style>
-        /* =========================================
-           全体・タブ用のスタイル
-           ========================================= */
-        body {
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            background-color: #f0f4f8;
-            color: #333;
-            margin: 0;
-            overflow-x: hidden;
-        }
-        .main-container {
-            max-width: 850px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            overflow: hidden;
-        }
-        .tabs {
-            display: flex;
-            background-color: #1e293b;
-        }
-        .tab-button {
-            flex: 1;
-            padding: 18px;
-            font-size: 16px;
-            font-weight: bold;
-            color: #94a3b8;
-            background: none;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-        .tab-button:hover {
-            background-color: #334155;
-            color: white;
-        }
-        .tab-button.active {
-            background-color: white;
-            color: #0f172a;
-        }
-        .tab-content {
-            display: none;
-            padding: 40px 30px;
-            animation: fadeIn 0.4s ease-out;
-        }
-        .tab-content.active {
-            display: block;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="中学校で習う「項」の考え方と、負の掛け算の本質である「空間反転」を、インタラクティブに実験して視覚的に理解できる数学教材。">
+  <title>✨ マイナスの魔法魔導書：完全版シミュレーター ✨</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;800;900&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-        /* =========================================
-           シミュレーター1：数直線
-           ========================================= */
-        h2 { margin-top: 0; margin-bottom: 10px; color: #0f172a; font-size: 24px; }
-        .description { font-size: 14px; color: #64748b; margin-bottom: 40px; }
-        .number-line { position: relative; width: 100%; margin: 80px auto 60px auto; height: 4px; background: #cbd5e1; border-radius: 2px; }
-        .arc-container { position: absolute; bottom: 10px; left: 0; width: 100%; height: 120px; pointer-events: none; overflow: visible; z-index: 1; }
-        #jump-arc {
-            fill: transparent;
-            stroke: #ef4444;
-            stroke-width: 4;
-            stroke-dasharray: 8, 6;
-            stroke-linecap: round;
-        }
-        .tick { position: absolute; width: 2px; height: 16px; background: #94a3b8; top: -6px; border-radius: 2px; }
-        .tick.main-tick { height: 24px; top: -10px; background: #64748b; }
-        .label { position: absolute; top: 25px; transform: translateX(-50%); font-size: 12px; font-weight: bold; color: #475569; white-space: nowrap; }
-        .marker { 
-            position: absolute; display: flex; align-items: center; justify-content: center; 
-            width: 50px; height: 50px; font-size: 45px; top: -35px; 
-            transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s ease-in-out; 
-            z-index: 2; transform: translateX(-50%) scaleX(-1);
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-        }
-        .marker.flipped { transform: translateX(-50%) scaleX(1); }
-        
-        .controls { margin-top: 30px; background: #f8fafc; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: left; }
-        .control-group { margin-bottom: 20px; display: flex; align-items: center; }
-        .control-group:last-child { margin-bottom: 0; }
-        .control-group label { width: 140px; font-size: 15px; font-weight: bold; color: #334155; }
-        input[type="range"] { flex-grow: 1; margin: 0 20px; accent-color: #3b82f6; cursor: pointer; }
-        .radio-options { display: flex; gap: 25px; }
-        .radio-options label { font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #475569; }
-        .value-display { display: inline-block; width: 50px; text-align: right; font-size: 18px; font-weight: 900; color: #2563eb; background: #eff6ff; padding: 4px 8px; border-radius: 6px; }
-        .formula { font-size: 34px; margin-top: 35px; font-weight: 900; color: #0f172a; padding: 25px; background: #f1f5f9; border-radius: 12px; letter-spacing: 2px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+  <style>
+    :root {
+      --bg-base: #0a0d16;
+      --bg-card: #131929;
+      --bg-input: #1a233d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --color-primary: #6366f1;
+      --color-primary-glow: rgba(99, 102, 241, 0.4);
+      --color-accent-a: #a5b4fc;
+      --color-accent-b: #67e8f9;
+      --color-accent-c: #fde047;
+      
+      --color-barrier: #06b6d4;
+      --color-barrier-glow: rgba(6, 182, 212, 0.35);
+      --color-scan: #eab308;
+      --color-scan-glow: rgba(234, 179, 8, 0.35);
+      
+      --color-success: #10b981;
+      --color-success-bg: rgba(16, 185, 129, 0.15);
+      --color-error: #f43f5e;
+      --color-error-bg: rgba(244, 63, 94, 0.15);
+      
+      --font-jp: 'Zen Maru Gothic', sans-serif;
+      --font-num: 'Plus Jakarta Sans', monospace;
+      
+      --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      --border-radius: 24px;
+      --transition-speed: 0.3s;
+    }
 
-        /* =========================================
-           シミュレーター2：プレート合成
-           ========================================= */
-        .plate-area { background-color: #f8fafc; border: 2px solid #e2e8f0; padding: 25px; border-radius: 16px; margin-bottom: 25px; text-align: left; min-height: 160px; transition: all 0.3s ease; }
-        .plate-area.active-area { background-color: #f0fdf4; border: 3px dashed #86efac; }
-        .plate-area h3 { margin-top: 0; color: #334155; font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .plate-container { display: flex; gap: 15px; flex-wrap: wrap; }
-        
-        .plate { 
-            padding: 15px; border-radius: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; 
-            width: 90px; color: white; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            position: relative; 
-        }
+    body.light-theme {
+      --bg-base: #f1f5f9;
+      --bg-card: #ffffff;
+      --bg-input: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      
+      --color-primary: #4f46e5;
+      --color-primary-glow: rgba(79, 70, 229, 0.2);
+      --color-accent-a: #312e81;
+      --color-accent-b: #0891b2;
+      --color-accent-c: #a16207;
+      
+      --color-success-bg: rgba(16, 185, 129, 0.1);
+      --color-error-bg: rgba(244, 63, 94, 0.1);
+      --card-shadow: 0 10px 30px rgba(148, 163, 184, 0.12);
+    }
 
-        .plate:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .plate:active { transform: scale(0.95); }
-        
-        .plate.draggable { cursor: grab; }
-        .plate.draggable:active { cursor: grabbing; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
 
-        /* ★追加・修正：正、負、ゼロの色分け */
-        .plate.positive { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        .plate.negative { background: linear-gradient(135deg, #f43f5e, #e11d48); }
-        .plate.zero { background: linear-gradient(135deg, #94a3b8, #64748b); } /* 0は灰色 */
-        
-        .plate-val { font-size: 2.2rem; font-weight: 900; pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .plate input { 
-            width: 65px; margin-top: 15px; text-align: center; font-size: 1.1rem; font-weight: bold; 
-            padding: 6px; border: none; border-radius: 6px; background: rgba(255,255,255,0.9); color: #0f172a;
-            transition: background 0.2s;
-        }
-        .plate input:focus { outline: 2px solid #fff; background: #fff; }
-        
-        .empty-msg { color: #94a3b8; font-weight: bold; width: 100%; text-align: center; padding: 30px 0; font-size: 1.1rem; border: 2px dashed #cbd5e1; border-radius: 12px; }
-        
-        .result-panel { background: linear-gradient(135deg, #0f172a, #1e293b); color: #fff; padding: 40px 30px; border-radius: 16px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; overflow: hidden; }
-        .result-panel::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%); pointer-events: none; }
-        .result-panel h3 { margin: 0 0 25px 0; color: #94a3b8; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; }
-        .result-formula { font-size: 3.5rem; font-weight: 900; word-break: break-all; line-height: 1.2; text-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .operator-plus { color: #64748b; margin: 0 12px; font-size: 2.5rem; vertical-align: middle; }
-        .operator-equal { color: #38bdf8; margin: 0 20px; }
-        .final-sum { color: #38bdf8; font-size: 4.5rem; }
-    </style>
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-jp);
+      transition: background-color var(--transition-speed), color var(--transition-speed);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1050px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ヘッダー */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 2px dashed var(--text-muted);
+    }
+
+    .title-area h1 {
+      font-size: 1.8rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #a5b4fc, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    body.light-theme .title-area h1 {
+      background: linear-gradient(135deg, #4f46e5, #0891b2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .title-area p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-icon {
+      background: var(--bg-card);
+      border: 1px solid var(--text-muted);
+      color: var(--text-main);
+      padding: 12px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      box-shadow: var(--card-shadow);
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+    }
+
+    .btn-icon:hover {
+      transform: scale(1.1);
+      border-color: var(--color-primary);
+      box-shadow: 0 0 10px var(--color-primary-glow);
+    }
+
+    /* 🌟 大元のタブナビゲーション */
+    .tab-nav {
+      display: flex;
+      background: var(--bg-card);
+      padding: 6px;
+      border-radius: 16px;
+      box-shadow: var(--card-shadow);
+      gap: 8px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 14px 20px;
+      font-family: var(--font-jp);
+      font-weight: 900;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--color-primary), #4338ca);
+      color: white;
+      box-shadow: 0 4px 15px var(--color-primary-glow);
+    }
+
+    body.light-theme .tab-btn.active {
+      background: linear-gradient(135deg, var(--color-primary), #6366f1);
+    }
+
+    /* タブコンテンツの表示制御 */
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .tab-content.active {
+      display: flex;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    /* 1. 数値入力セクション */
+    .input-section {
+      background: var(--bg-card);
+      border-radius: var(--border-radius);
+      padding: 24px;
+      box-shadow: var(--card-shadow);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .input-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-barrier), var(--color-scan));
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cards-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .cards-container { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--bg-input);
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      border: 2px solid transparent;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    body.light-theme .card { box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+
+    .card.card-a { --card-color: var(--color-primary); --card-color-glow: var(--color-primary-glow); }
+    .card.card-b { --card-color: var(--color-barrier); --card-color-glow: var(--color-barrier-glow); }
+    .card.card-c { --card-color: var(--color-scan); --card-color-glow: var(--color-scan-glow); }
+
+    .card:focus-within {
+      border-color: var(--card-color);
+      box-shadow: 0 0 15px var(--card-color-glow);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-label { font-size: 1.3rem; font-weight: 900; }
+    .card-a .card-label { color: var(--color-accent-a); }
+    .card-b .card-label { color: var(--color-accent-b); }
+    .card-c .card-label { color: var(--color-accent-c); }
+
+    .card-info { font-size: 0.8rem; color: var(--text-muted); }
+
+    .input-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .btn-step {
+      background: var(--bg-card);
+      border: 1px solid var(--text-muted);
+      color: var(--text-main);
+      font-size: 1.1rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s;
+    }
+
+    .btn-step:hover {
+      background: var(--card-color);
+      color: white;
+      border-color: var(--card-color);
+    }
+
+    .btn-step:active { transform: scale(0.9); }
+
+    .number-input {
+      background: transparent;
+      border: none;
+      color: var(--text-main);
+      font-family: var(--font-num);
+      font-size: 1.8rem;
+      font-weight: 800;
+      text-align: center;
+      width: 70px;
+      outline: none;
+    }
+
+    .slider-input {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-card);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .slider-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--slider-color);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .slider-input::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+    .card-a { --slider-color: var(--color-primary); }
+    .card-b { --slider-color: var(--color-barrier); }
+    .card-c { --slider-color: var(--color-scan); }
+
+    /* 🎲 シャッフルコントロールエリア */
+    .control-hub {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    .btn-shuffle {
+      background: linear-gradient(135deg, var(--color-primary), #8b5cf6);
+      border: none;
+      color: white;
+      font-family: var(--font-jp);
+      font-weight: 900;
+      font-size: 1.2rem;
+      padding: 14px 28px;
+      border-radius: 50px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-shuffle:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.6);
+    }
+
+    .btn-shuffle i { animation: diceRotate 2s infinite linear paused; }
+    .btn-shuffle:hover i { animation-play-state: running; }
+
+    @keyframes diceRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* 2. 比較グリッド */
+    .compare-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 768px) {
+      .compare-grid { grid-template-columns: 1fr; }
+    }
+
+    .compare-card {
+      background: var(--bg-card);
+      border-radius: var(--border-radius);
+      padding: 24px;
+      box-shadow: var(--card-shadow);
+      border: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+    }
+
+    .compare-card.mode-a { border-color: rgba(99, 102, 241, 0.15); }
+    .compare-card.mode-a::after {
+      content: '中学校：項（カプセル）の考え方';
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: var(--color-primary);
+      color: white;
+      font-weight: 900;
+      padding: 2px 14px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    .compare-card.mode-b { border-color: rgba(234, 179, 8, 0.15); }
+    .compare-card.mode-b::after {
+      content: '小学校：左から計算ルール';
+      position: absolute;
+      top: -12px;
+      right: 20px;
+      background: var(--color-scan);
+      color: #0b0f19;
+      font-weight: 900;
+      padding: 2px 14px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+    }
+
+    .mode-header { display: flex; align-items: center; gap: 12px; }
+
+    .mode-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: white;
+    }
+    .mode-a .mode-icon { background: var(--color-primary); box-shadow: 0 0 10px var(--color-primary-glow); }
+    .mode-b .mode-icon { background: var(--color-scan); box-shadow: 0 0 10px var(--color-scan-glow); }
+
+    .mode-title h2 { font-size: 1.25rem; font-weight: 900; }
+    .mode-title p { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* 🔄 ドラッガブル/スワッパブルカードエリア */
+    .formula-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      padding: 20px 10px;
+      min-height: 110px;
+      gap: 8px;
+    }
+    
+    body.light-theme .formula-row { background: rgba(0, 0, 0, 0.03); }
+
+    .math-sign { font-size: 1.5rem; font-weight: 900; color: var(--text-muted); width: 24px; text-align: center; }
+
+    .draggable-card {
+      background: var(--bg-input);
+      border: 2px solid rgba(255, 255, 255, 0.05);
+      border-radius: 14px;
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-width: 90px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+    }
+    
+    body.light-theme .draggable-card {
+      background: #f8fafc;
+      border: 2px solid rgba(0, 0, 0, 0.05);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .draggable-card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+    .draggable-card.term-a { border-color: rgba(99, 102, 241, 0.4); }
+    .draggable-card.term-b { border-color: rgba(6, 182, 212, 0.4); }
+    .draggable-card.term-c { border-color: rgba(234, 179, 8, 0.4); }
+
+    .term-value { font-family: var(--font-num); font-size: 1.5rem; font-weight: 800; letter-spacing: 0.5px; }
+    .term-a .term-value { color: var(--color-accent-a); }
+    .term-b .term-value { color: var(--color-accent-b); }
+    .term-c .term-value { color: var(--color-accent-c); }
+
+    .plain-card {
+      background: var(--bg-input);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-family: var(--font-num);
+      font-size: 1.6rem;
+      font-weight: 900;
+      min-width: 70px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    
+    body.light-theme .plain-card { background: #f8fafc; }
+    .plain-card.num-a { color: var(--color-accent-a); border-color: rgba(99, 102, 241, 0.15); }
+    .plain-card.num-b { color: var(--color-accent-b); border-color: rgba(6, 182, 212, 0.15); }
+    .plain-card.num-c { color: var(--color-accent-c); border-color: rgba(234, 179, 8, 0.15); }
+
+    .card-mover-row { display: flex; justify-content: space-between; width: 100%; gap: 8px; margin-top: 4px; }
+
+    .btn-mover {
+      background: var(--bg-card);
+      border: 1px solid var(--text-muted);
+      color: var(--text-main);
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s;
+    }
+
+    .btn-mover:hover { background: var(--color-primary); border-color: var(--color-primary); color: white; }
+    .btn-mover:disabled { opacity: 0.15; cursor: not-allowed; pointer-events: none; }
+
+    /* 👣 計算ステップ表示 */
+    .steps-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 180px;
+      justify-content: center;
+    }
+
+    body.light-theme .steps-container { background: rgba(0, 0, 0, 0.03); }
+    .step-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; }
+    .step-label { font-size: 0.75rem; color: var(--text-muted); border: 1px solid var(--text-muted); border-radius: 4px; padding: 1px 6px; font-weight: 700; }
+    .step-expr { font-family: var(--font-num); font-size: 1.35rem; font-weight: 700; letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+    .step-arrow-down { display: flex; justify-content: center; color: var(--text-muted); font-size: 0.9rem; animation: arrowBounce 1s infinite alternate; }
+
+    @keyframes arrowBounce {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(3px); }
+    }
+
+    .step-box-purple { border: 2px solid var(--color-primary); background: rgba(99, 102, 241, 0.12); padding: 1px 8px; border-radius: 10px; box-shadow: 0 0 10px var(--color-primary-glow); }
+    .step-box-yellow { border: 2px dashed var(--color-scan); background: rgba(234, 179, 8, 0.12); padding: 1px 8px; border-radius: 10px; box-shadow: 0 0 10px var(--color-scan-glow); }
+
+    /* 🏆 最終結果エリア */
+    .final-answer {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 5px solid var(--theme-color);
+      padding: 14px 18px;
+      border-radius: 0 12px 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+    
+    body.light-theme .final-answer { background: rgba(0, 0, 0, 0.02); }
+    .mode-a .final-answer { --theme-color: var(--color-primary); }
+    .mode-b .final-answer { --theme-color: var(--color-scan); }
+    .final-label { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); }
+    .final-value { font-family: var(--font-num); font-size: 2.2rem; font-weight: 900; color: var(--theme-color); text-shadow: 0 0 10px var(--theme-color-glow); }
+    .mode-a .final-value { --theme-color-glow: var(--color-primary-glow); }
+    .mode-b .final-value { --theme-color-glow: var(--color-scan-glow); }
+
+    /* 3. 結果の判定とまとめフィードバック */
+    .feedback-section { border-radius: var(--border-radius); padding: 24px; display: flex; flex-direction: column; gap: 12px; align-items: center; text-align: center; box-shadow: var(--card-shadow); transition: all 0.3s ease; position: relative; }
+    .feedback-section.error { background: var(--color-error-bg); border: 2px solid var(--color-error); color: #fda4af; animation: shake 0.4s ease-in-out; }
+    body.light-theme .feedback-section.error { color: #9f1239; }
+    .feedback-section.success { background: var(--color-success-bg); border: 2px solid var(--color-success); color: #a7f3d0; }
+    body.light-theme .feedback-section.success { color: #065f46; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .feedback-icon { font-size: 2.2rem; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+    .feedback-title { font-size: 1.35rem; font-weight: 900; }
+    .feedback-desc { font-size: 0.95rem; max-width: 650px; line-height: 1.6; }
+    .diff-badge { display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 16px; border-radius: 20px; font-family: var(--font-num); font-weight: 800; margin-top: 8px; font-size: 1.05rem; }
+    body.light-theme .diff-badge { background: rgba(255,255,255,0.7); border: 1px solid rgba(0,0,0,0.1); }
+
+    /* 4. 解説魔導書 */
+    .explain-section { background: var(--bg-card); border-radius: var(--border-radius); box-shadow: var(--card-shadow); border: 1px solid rgba(255, 255, 255, 0.03); overflow: hidden; }
+    .explain-header { padding: 20px 24px; background: rgba(0, 0, 0, 0.12); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 900; font-size: 1.15rem; color: #a5b4fc; }
+    body.light-theme .explain-header { color: #4f46e5; background: rgba(0, 0, 0, 0.02); }
+    .explain-header .toggle-icon { transition: transform 0.3s; }
+    .explain-section.open .explain-header .toggle-icon { transform: rotate(180deg); }
+    .explain-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out; padding: 0 24px; }
+    .explain-section.open .explain-content { max-height: 1000px; padding: 24px; }
+    .explain-inner { display: flex; flex-direction: column; gap: 16px; line-height: 1.7; }
+    .explain-card-highlight { background: var(--bg-input); border-radius: 12px; padding: 16px; border-left: 4px solid var(--color-primary); }
+    .spell-title { font-weight: 900; color: var(--color-primary); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+
+    /* 🌀 掛け算用：数直線ステージの独自スタイル */
+    .mult-layout {
+      background: var(--bg-card);
+      border-radius: var(--border-radius);
+      padding: 30px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .mult-controls {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      background: var(--bg-input);
+      padding: 20px;
+      border-radius: 16px;
+    }
+    .mult-controls select {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--text-muted);
+      padding: 10px 16px;
+      font-size: 1rem;
+      border-radius: 8px;
+      font-family: var(--font-jp);
+      cursor: pointer;
+      outline: none;
+    }
+    .mult-controls select:focus {
+      border-color: var(--color-primary);
+    }
+    .mult-equation {
+      font-family: var(--font-num);
+      font-size: 2.2rem;
+      font-weight: 900;
+      text-align: center;
+      color: var(--text-main);
+      margin: 10px 0;
+    }
+    .mult-eq-res {
+      border-bottom: 4px double var(--color-accent-b);
+      color: var(--color-accent-b);
+      padding-bottom: 2px;
+    }
+    .stage {
+      position: relative;
+      height: 160px;
+      border-bottom: 3px solid var(--text-muted);
+      margin: 20px 0 40px 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+    .origin-line {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      height: 100%;
+      width: 3px;
+      background: var(--text-main);
+      box-shadow: 0 0 8px rgba(255,255,255,0.4);
+      z-index: 10;
+    }
+    .origin-label {
+      position: absolute;
+      left: 50%;
+      bottom: -32px;
+      transform: translateX(-50%);
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: var(--text-main);
+    }
+    .bar-container {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      height: 46px;
+      display: flex;
+      transform-origin: left bottom;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .block {
+      width: 44px;
+      height: 46px;
+      box-sizing: border-box;
+      border: 2px solid var(--bg-card);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-weight: 900;
+      font-family: var(--font-num);
+      font-size: 15px;
+      border-radius: 6px;
+      transition: background-color 0.5s, transform 0.3s;
+    }
+
+    footer { text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 40px; padding-bottom: 20px; }
+    .sparkle { position: absolute; pointer-events: none; animation: sparkleAnim 0.8s ease-out forwards; }
+    @keyframes sparkleAnim { 0% { transform: scale(0) rotate(0deg); opacity: 1; } 100% { transform: scale(1.4) rotate(120deg); opacity: 0; } }
+  </style>
 </head>
 <body>
 
-<div class="main-container">
-    <div class="tabs">
-        <button class="tab-button active" onclick="switchTab('tab-walk', this)">🚶‍♂️ 歩き方シミュレーター</button>
-        <button class="tab-button" onclick="switchTab('tab-plates', this)">🧪 プレート合成シミュレーター</button>
+  <div class="container">
+    <header>
+      <div class="title-area">
+        <h1><i class="fa-solid fa-wand-magic-sparkles"></i> マイナスの魔法魔導書</h1>
+        <p>「項の入れ替え」と「空間の反転」を自分の手で実験できる数学ラボ</p>
+      </div>
+      <div class="header-controls">
+        <button id="btn-sound" class="btn-icon" title="効果音オン/オフ" onclick="toggleSound()">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+        <button class="btn-icon" title="テーマ切り替え" onclick="toggleTheme()">
+          <i class="fa-solid fa-circle-half-stroke"></i>
+        </button>
+      </div>
+    </header>
+
+    <nav class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('tab-plusminus')">
+        <i class="fa-solid fa-arrows-spin"></i> 足し算・引き算の魔法 (項の並べ替え)
+      </button>
+      <button class="tab-btn" onclick="switchTab('tab-multiply')">
+        <i class="fa-solid fa-mirror"></i> 掛け算の魔法 (空間反転モデル)
+      </button>
+    </nav>
+
+    <div id="tab-plusminus" class="tab-content active">
+      <section class="input-section">
+        <div class="section-title">
+          <i class="fa-solid fa-sliders"></i> ① まずは3つの数字を決めてみよう！ (範囲：0 ~ 30)
+        </div>
+        
+        <div class="cards-container">
+          <div class="card card-a">
+            <div class="card-header">
+              <span class="card-label">A</span>
+              <span class="card-info">はじめの数</span>
+            </div>
+            <div class="input-control">
+              <button class="btn-step" onclick="adjustValue('A', -1)"><i class="fa-solid fa-minus"></i></button>
+              <input type="number" id="valA" class="number-input" value="10" min="0" max="30" oninput="onNumberInput('A')">
+              <button class="btn-step" onclick="adjustValue('A', 1)"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <input type="range" id="slideA" class="slider-input" min="0" max="30" value="10" oninput="onSliderInput('A')">
+          </div>
+
+          <div class="card card-b">
+            <div class="card-header">
+              <span class="card-label">B</span>
+              <span class="card-info">ひく数</span>
+            </div>
+            <div class="input-control">
+              <button class="btn-step" onclick="adjustValue('B', -1)"><i class="fa-solid fa-minus"></i></button>
+              <input type="number" id="valB" class="number-input" value="3" min="0" max="30" oninput="onNumberInput('B')">
+              <button class="btn-step" onclick="adjustValue('B', 1)"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <input type="range" id="slideB" class="slider-input" min="0" max="30" value="3" oninput="onSliderInput('B')">
+          </div>
+
+          <div class="card card-c">
+            <div class="card-header">
+              <span class="card-label">C</span>
+              <span class="card-info">たす数</span>
+            </div>
+            <div class="input-control">
+              <button class="btn-step" onclick="adjustValue('C', -1)"><i class="fa-solid fa-minus"></i></button>
+              <input type="number" id="valC" class="number-input" value="4" min="0" max="30" oninput="onNumberInput('C')">
+              <button class="btn-step" onclick="adjustValue('C', 1)"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <input type="range" id="slideC" class="slider-input" min="0" max="30" value="4" oninput="onSliderInput('C')">
+          </div>
+        </div>
+      </section>
+
+      <section class="control-hub">
+        <button class="btn-shuffle" onclick="shuffleCards()">
+          <i class="fa-solid fa-dice"></i> 🎲 カードの順番をかき混ぜる！ (シャッフル)
+        </button>
+      </section>
+
+      <div class="compare-grid">
+        <section class="compare-card mode-a">
+          <div class="mode-header">
+            <div class="mode-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="mode-title">
+              <h2>中学校「項」のならびかえ</h2>
+              <p>符号とかっこが数字を包むカプセルになる！</p>
+            </div>
+          </div>
+
+          <div class="formula-row" id="formula-a-container"></div>
+          
+          <div class="steps-container">
+            <div class="step-row">
+              <span class="step-label">数式</span>
+              <div class="step-expr" id="stepA-expr-init"></div>
+            </div>
+            <div class="step-arrow-down"><i class="fa-solid fa-arrow-down-long"></i></div>
+            <div class="step-row">
+              <span class="step-label">途中</span>
+              <div class="step-expr" id="stepA-expr-mid"></div>
+            </div>
+          </div>
+          
+          <div class="final-answer">
+            <span class="final-label">最終計算結果</span>
+            <span class="final-value" id="resultA">11</span>
+          </div>
+        </section>
+
+        <section class="compare-card mode-b">
+          <div class="mode-header">
+            <div class="mode-icon"><i class="fa-solid fa-arrow-right-left"></i></div>
+            <div class="mode-title">
+              <h2>小学校「数字のみ」のならびかえ</h2>
+              <p>ひく記号(－)とたす記号(＋)は地面に固定！</p>
+            </div>
+          </div>
+
+          <div class="formula-row" id="formula-b-container"></div>
+          
+          <div class="steps-container">
+            <div class="step-row">
+              <span class="step-label">数式</span>
+              <div class="step-expr" id="stepB-expr-init"></div>
+            </div>
+            <div class="step-arrow-down"><i class="fa-solid fa-arrow-down-long"></i></div>
+            <div class="step-row">
+              <span class="step-label">途中</span>
+              <div class="step-expr" id="stepB-expr-mid"></div>
+            </div>
+          </div>
+          
+          <div class="final-answer">
+            <span class="final-label">最終計算結果</span>
+            <span class="final-value" id="resultB">11</span>
+          </div>
+        </section>
+      </div>
+
+      <section id="feedback-panel" class="feedback-section success">
+        <div id="feedback-icon" class="feedback-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div id="feedback-title" class="feedback-title">どんな順番でも答えが同じ！</div>
+        <div id="feedback-desc" class="feedback-desc"></div>
+        <div id="diff-badge" class="diff-badge">差額: 0</div>
+      </section>
+
+      <section class="explain-section" id="explain-panel">
+        <div class="explain-header" onclick="toggleExplain()">
+          <span><i class="fa-solid fa-book-open"></i> 📖 なぜ答えが変わらない？「項のカプセル魔法」を暴く</span>
+          <i class="fa-solid fa-chevron-down toggle-icon"></i>
+        </div>
+        <div class="explain-content">
+          <div class="explain-inner">
+            <p>
+              小学校までは、<code>10 - 3</code> は「ひくという命令（記号）」と考えられていました。<br>
+              しかし、中学校では<strong>「ひく <code>-3</code> は、マイナス3という負の数を『足している』んだ」</strong>と考えます！
+            </p>
+            <div class="explain-card-highlight">
+              <div class="spell-title"><i class="fa-solid fa-shield-halved"></i> 魔法のカプセル：かっこ `( )` と符号の一体化</div>
+              <p>
+                中学校では、数字と符号がガッチリ合体して <strong><code>(-3)</code> という一つの「項カード（カプセル）」</strong>になります。<br>
+                式全体は <code>(+10) + (-3) + (+4)</code> のように、<strong>すべて「たし算（＋）」で連結されます。</strong><br>
+                加法の交換法則・結合法則が働くため、どの順番にシャッフルしても絶対に答えが変わらなくなるのです！
+              </p>
+            </div>
+            <p style="text-align: center; font-weight: 900; font-size: 1.1rem; color: #a5b4fc; margin-top: 10px;">
+              💡 数字をかっこで包んで「項」にすることで、私たちは『順番を自由に入れ替えられる魔法』を手に入れたんだね！
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
 
-    <div id="tab-walk" class="tab-content active">
-        <h2>正負の数 シミュレーター (±20版)</h2>
-        <div class="description">演算子（加法・減法）＝ 体の向き ／ 符号（正・負）＝ 歩き方（前進・後退）</div>
-        
-        <div class="number-line" id="line">
-            <svg id="arc-svg" class="arc-container">
-                <defs>
-                    <marker id="arrowhead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                        <polygon points="0 0, 6 3, 0 6" fill="#ef4444" />
-                    </marker>
-                </defs>
-                <path id="jump-arc" d="" />
-            </svg>
-            <div class="marker" id="marker">🚶‍♂️</div>
+    <div id="tab-multiply" class="tab-content">
+      <section class="mult-layout">
+        <div class="section-title">
+          <i class="fa-solid fa-chart-line"></i> ② かける数（反転のトリガー）を切り替えてみよう！
         </div>
 
-        <div class="controls">
-            <div class="control-group">
-                <label>① スタートの数:</label>
-                <input type="range" id="start" min="-20" max="20" value="5" oninput="updateLine()">
-                <span class="value-display" id="start-val">+5</span>
-            </div>
-            <div class="control-group">
-                <label>② 計算の種類:</label>
-                <div class="radio-options">
-                    <label><input type="radio" name="operator" value="+" checked onchange="updateLine()"> 加法（ ＋ ）</label>
-                    <label><input type="radio" name="operator" value="-" onchange="updateLine()"> 減法（ － ）</label>
-                </div>
-            </div>
-            <div class="control-group">
-                <label>③ 続く数:</label>
-                <input type="range" id="sub" min="-20" max="20" value="-5" oninput="updateLine()">
-                <span class="value-display" id="sub-val">-5</span>
-            </div>
+        <div class="mult-controls">
+          <div class="card card-a" style="box-shadow:none; padding:10px; width:220px; align-items:center;">
+            <label style="font-weight:900; margin-bottom:8px; color:var(--color-accent-a)">基準の長さ (絶対値)</label>
+            <select id="multValA" onchange="updateMultSimulation()">
+              <option value="3">3ユニット</option>
+              <option value="5">5ユニット</option>
+            </select>
+          </div>
+
+          <div class="card card-c" style="box-shadow:none; padding:10px; width:280px; align-items:center;">
+            <label style="font-weight:900; margin-bottom:8px; color:var(--color-accent-c)">反転演算スイッチ</label>
+            <select id="multOperator" onchange="updateMultSimulation()">
+              <option value="1">× (+1) : そのまま動かさない</option>
+              <option value="-1">× (-1) : 0を中心に1回反転</option>
+              <option value="-2">× (-2) : 長さを2倍にして反転</option>
+              <option value="double-minus">(-1) × (-1) : 鏡の世界を再反転</option>
+            </select>
+          </div>
         </div>
-        <div class="formula" id="formula">(+5) + (-5) = 0</div>
+
+        <div class="mult-equation" id="multEquationDisplay"></div>
+
+        <div class="stage">
+          <div class="origin-line"></div>
+          <div class="origin-label">0 (反転の鏡軸)</div>
+          <div class="bar-container" id="multVisualBar"></div>
+        </div>
+
+        <div id="multFeedbackPanel" class="feedback-section success" style="text-align:left; align-items:flex-start;">
+          <div class="spell-title" style="color:var(--color-accent-b)"><i class="fa-solid fa-wand-magic-sparkles"></i> 反転の魔導解説</div>
+          <div id="multCommentaryText" class="feedback-desc" style="max-width:100%"></div>
+        </div>
+      </section>
     </div>
 
-    <div id="tab-plates" class="tab-content">
-        <h2>正負の数 合成シミュレーター</h2>
-        <div class="description">プレートをタップして実験台へ。ドラッグして並べ替えてみよう</div>
+  </div>
 
-        <div class="plate-area">
-            <h3>🧪 素材プレート置き場 <span style="font-size: 0.9rem; font-weight: normal; color: #64748b;">(タップで下へ追加)</span></h3>
-            <div id="available-container" class="plate-container"></div>
-        </div>
+  <footer>
+    <p>&copy; 2026 ()の魔法符号・空間反転シミュレーター - 中学校数学インタラクティブ教材</p>
+  </footer>
 
-        <div class="plate-area active-area">
-            <h3>🔬 合成実験台 <span style="font-size: 0.9rem; font-weight: normal; color: #16a34a;">(ドラッグで並べ替え / タップで戻す)</span></h3>
-            <div id="active-container" class="plate-container"></div>
-        </div>
+  <script>
+    // サウンドコントロール (Web Audio API)
+    let audioCtx = null;
+    let isSoundEnabled = true;
 
-        <div class="result-panel">
-            <h3>計算結果</h3>
-            <div id="result-formula" class="result-formula">
-                <span style="font-size: 1.5rem; color: #64748b; font-weight: normal;">プレートを合成するとここに式が表示されます</span>
+    function playSound(type) {
+      if (!isSoundEnabled) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'success') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(880.00, now);
+          osc.frequency.setValueAtTime(1318.51, now + 0.08);
+          osc.frequency.setValueAtTime(1760.00, now + 0.16);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.005, now + 0.4);
+          osc.start(now);
+          osc.stop(now + 0.45);
+        } else if (type === 'shuffle') {
+          osc.type = 'sine';
+          for (let i = 0; i < 4; i++) {
+            const timeOffset = i * 0.06;
+            osc.frequency.setValueAtTime(300 + (i * 120), now + timeOffset);
+          }
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.28);
+        } else if (type === 'swap') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+          osc.start(now);
+          osc.stop(now + 0.13);
+        } else if (type === 'error-alert') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.setValueAtTime(110, now + 0.12);
+          gain.gain.setValueAtTime(0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.32);
+        }
+      } catch (e) {
+        console.warn('Audio Context error', e);
+      }
+    }
+
+    function toggleSound() {
+      isSoundEnabled = !isSoundEnabled;
+      const btn = document.getElementById('btn-sound');
+      if (isSoundEnabled) {
+        btn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
+        btn.style.borderColor = 'var(--text-muted)';
+        playSound('swap');
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+        btn.style.borderColor = 'var(--color-error)';
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light-theme');
+      playSound('swap');
+    }
+
+    function toggleExplain() {
+      const panel = document.getElementById('explain-panel');
+      panel.classList.toggle('open');
+      playSound('swap');
+    }
+
+    // 🌟 タブの切り替えシステム制御
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      const activeBtn = event.currentTarget;
+      activeBtn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+      
+      playSound('swap');
+      
+      if(tabId === 'tab-multiply') {
+        updateMultSimulation();
+      } else {
+        updateSimulation();
+      }
+    }
+
+    // ----------------------------------------------------
+    // タブ1: 項の並べ替えロジック
+    // ----------------------------------------------------
+    let currentOrder = [0, 1, 2];
+
+    function onSliderInput(vName) {
+      const slider = document.getElementById(`slide${vName}`);
+      const numInput = document.getElementById(`val${vName}`);
+      numInput.value = slider.value;
+      updateSimulation();
+      playSound('swap');
+      createSparkle(`slide${vName}`);
+    }
+
+    function onNumberInput(vName) {
+      const numInput = document.getElementById(`val${vName}`);
+      const slider = document.getElementById(`slide${vName}`);
+      let val = parseInt(numInput.value);
+      if (isNaN(val)) val = 0;
+      val = Math.max(0, Math.min(30, val));
+      numInput.value = val;
+      slider.value = val;
+      updateSimulation();
+      playSound('swap');
+      createSparkle(`val${vName}`);
+    }
+
+    function adjustValue(vName, amount) {
+      const numInput = document.getElementById(`val${vName}`);
+      let currentVal = parseInt(numInput.value) || 0;
+      numInput.value = Math.max(0, Math.min(30, currentVal + amount));
+      onNumberInput(vName);
+    }
+
+    function createSparkle(targetId) {
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const sparkle = document.createElement('div');
+      sparkle.classList.add('sparkle');
+      sparkle.innerHTML = '✨';
+      sparkle.style.color = targetId.includes('A') ? '#a5b4fc' : (targetId.includes('B') ? '#67e8f9' : '#fde047');
+      sparkle.style.left = `${rect.left + rect.width / 2 + (Math.random() - 0.5) * 40}px`;
+      sparkle.style.top = `${rect.top + window.scrollY + rect.height / 2 + (Math.random() - 0.5) * 20}px`;
+      sparkle.style.fontSize = `${12 + Math.random() * 12}px`;
+      
+      document.body.appendChild(sparkle);
+      setTimeout(() => sparkle.remove(), 800);
+    }
+
+    function moveCard(positionIndex, direction) {
+      const targetIndex = positionIndex + direction;
+      if (targetIndex < 0 || targetIndex >= 3) return;
+      
+      const temp = currentOrder[positionIndex];
+      currentOrder[positionIndex] = currentOrder[targetIndex];
+      currentOrder[targetIndex] = temp;
+      
+      updateSimulation();
+      playSound('swap');
+    }
+
+    function shuffleCards() {
+      for (let i = currentOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = currentOrder[i];
+        currentOrder[i] = currentOrder[j];
+        currentOrder[j] = temp;
+      }
+      updateSimulation();
+      playSound('shuffle');
+    }
+
+    const formatSigned = (val) => val >= 0 ? `(+${val})` : `(${val})`;
+
+    function updateSimulation() {
+      if(!document.getElementById('tab-plusminus').classList.contains('active')) return;
+
+      const A = parseInt(document.getElementById('valA').value) || 0;
+      const B = parseInt(document.getElementById('valB').value) || 0;
+      const C = parseInt(document.getElementById('valC').value) || 0;
+
+      const termMeta = [
+        { name: 'A', class: 'term-a', numClass: 'num-a', val: A, sign: 1, label: `(+${A})` },
+        { name: 'B', class: 'term-b', numClass: 'num-b', val: B, sign: -1, label: `(-${B})` },
+        { name: 'C', class: 'term-c', numClass: 'num-c', val: C, sign: 1, label: `(+${C})` }
+      ];
+
+      const containerA = document.getElementById('formula-a-container');
+      containerA.innerHTML = '';
+      
+      currentOrder.forEach((metaIdx, posIdx) => {
+        const meta = termMeta[metaIdx];
+        const cardHtml = `
+          <div class="draggable-card ${meta.class}">
+            <div class="term-value">${meta.label}</div>
+            <div class="card-mover-row">
+              <button class="btn-mover" onclick="moveCard(${posIdx}, -1)" ${posIdx === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left"></i></button>
+              <button class="btn-mover" onclick="moveCard(${posIdx}, 1)" ${posIdx === 2 ? 'disabled' : ''}><i class="fa-solid fa-chevron-right"></i></button>
             </div>
-        </div>
-    </div>
-</div>
+          </div>
+        `;
+        containerA.insertAdjacentHTML('beforeend', cardHtml);
+        if (posIdx < 2) containerA.insertAdjacentHTML('beforeend', '<div class="math-sign">+</div>');
+      });
 
-<script>
-    // --- パーティクルエフェクト ---
-    function spawnParticles(x, y, color) {
-        for (let i = 0; i < 12; i++) {
-            const p = document.createElement('div');
-            p.style.position = 'fixed';
-            p.style.left = x + 'px';
-            p.style.top = y + 'px';
-            p.style.width = '10px';
-            p.style.height = '10px';
-            p.style.backgroundColor = color;
-            p.style.borderRadius = '50%';
-            p.style.pointerEvents = 'none';
-            p.style.zIndex = '9999';
-            document.body.appendChild(p);
-
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = Math.random() * 60 + 30;
-            const tx = Math.cos(angle) * velocity;
-            const ty = Math.sin(angle) * velocity;
-
-            p.animate([
-                { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
-                { transform: `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(0)`, opacity: 0 }
-            ], {
-                duration: 500 + Math.random() * 300,
-                easing: 'cubic-bezier(0, .9, .57, 1)'
-            }).onfinish = () => p.remove();
+      const containerB = document.getElementById('formula-b-container');
+      containerB.innerHTML = '';
+      
+      currentOrder.forEach((metaIdx, posIdx) => {
+        const meta = termMeta[metaIdx];
+        const cardHtml = `<div class="plain-card ${meta.numClass}">${meta.val}</div>`;
+        containerB.insertAdjacentHTML('beforeend', cardHtml);
+        if (posIdx === 0) {
+          containerB.insertAdjacentHTML('beforeend', '<div class="math-sign" style="color: var(--color-scan);">-</div>');
+        } else if (posIdx === 1) {
+          containerB.insertAdjacentHTML('beforeend', '<div class="math-sign" style="color: var(--color-scan);">+</div>');
         }
-    }
+      });
 
-    // --- タブ切り替え ---
-    function switchTab(tabId, btnElement) {
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      const t1 = termMeta[currentOrder[0]];
+      const t2 = termMeta[currentOrder[1]];
+      const t3 = termMeta[currentOrder[2]];
+
+      const val1 = t1.val * t1.sign;
+      const val2 = t2.val * t2.sign;
+      const val3 = t3.val * t3.sign;
+
+      const stepAInit = document.getElementById('stepA-expr-init');
+      stepAInit.innerHTML = `<span class="step-box-purple">${t1.label} + ${t2.label}</span> + ${t3.label}`;
+
+      const val12 = val1 + val2;
+      const stepAMid = document.getElementById('stepA-expr-mid');
+      stepAMid.innerHTML = `<span class="highlight-value val-a">${formatSigned(val12)}</span> + ${t3.label}`;
+
+      const resultA = val12 + val3;
+      document.getElementById('resultA').textContent = resultA;
+
+      const n1 = t1.val;
+      const n2 = t2.val;
+      const n3 = t3.val;
+
+      const stepBInit = document.getElementById('stepB-expr-init');
+      stepBInit.innerHTML = `<span class="step-box-yellow">${n1} - ${n2}</span> + ${n3}`;
+
+      const n12 = n1 - n2;
+      const stepBMid = document.getElementById('stepB-expr-mid');
+      stepBMid.innerHTML = `<span class="highlight-value val-b">${n12}</span> + ${n3}`;
+
+      const resultB = n12 + n3;
+      document.getElementById('resultB').textContent = resultB;
+
+      const feedbackPanel = document.getElementById('feedback-panel');
+      const feedbackIcon = document.getElementById('feedback-icon');
+      const feedbackTitle = document.getElementById('feedback-title');
+      const feedbackDesc = document.getElementById('feedback-desc');
+      const diffBadge = document.getElementById('diff-badge');
+
+      const correctVal = A - B + C;
+
+      if (resultB === correctVal) {
+        feedbackPanel.className = 'feedback-section success';
+        feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+        feedbackTitle.textContent = '計算結果がどちらも一致しています！✨';
         
-        document.getElementById(tabId).classList.add('active');
-        btnElement.classList.add('active');
-
-        if (tabId === 'tab-walk') updateLine();
-    }
-
-    // --- シミュレーター1 (数直線) ---
-    const line = document.getElementById('line');
-    const marker = document.getElementById('marker');
-    const startSlider = document.getElementById('start');
-    const subSlider = document.getElementById('sub');
-    const formulaText = document.getElementById('formula');
-    const startVal = document.getElementById('start-val');
-    const subVal = document.getElementById('sub-val');
-    const jumpArc = document.getElementById('jump-arc');
-
-    function formatSign(num) {
-        if (num > 0) return "+" + num;
-        if (num === 0) return "0";
-        return num.toString();
-    }
-
-    for (let i = -20; i <= 20; i++) {
-        let tick = document.createElement('div');
-        tick.className = `tick ${i % 5 === 0 ? 'main-tick' : ''}`;
-        tick.style.left = ((i + 20) / 40 * 100) + '%';
-        line.appendChild(tick);
-        if (i % 5 === 0) {
-            let label = document.createElement('div');
-            label.className = 'label';
-            label.style.left = ((i + 20) / 40 * 100) + '%';
-            label.innerText = formatSign(i);
-            line.appendChild(label);
-        }
-    }
-
-    function updateLine() {
-        if (document.getElementById('tab-walk').style.display === 'none' && !document.getElementById('tab-walk').classList.contains('active')) return;
-
-        const start = parseInt(startSlider.value);
-        const sub = parseInt(subSlider.value);
-        const operator = document.querySelector('input[name="operator"]:checked').value;
-        const result = (operator === '+') ? (start + sub) : (start - sub);
-
-        startVal.innerText = formatSign(start);
-        subVal.innerText = formatSign(sub);
-        formulaText.innerText = `(${formatSign(start)}) ${operator} (${formatSign(sub)}) = ${formatSign(result)}`;
-
-        if (operator === '-') marker.classList.add('flipped');
-        else marker.classList.remove('flipped');
-
-        const visualResult = Math.max(-20, Math.min(20, result));
-        marker.style.left = ((visualResult + 20) / 40 * 100) + '%';
-
-        const lineRect = line.getBoundingClientRect();
-        if (lineRect.width === 0) return; 
-
-        const startPx = ((start + 20) / 40) * lineRect.width;
-        const endPx = ((visualResult + 20) / 40) * lineRect.width;
-
-        if (startPx === endPx) {
-            jumpArc.setAttribute('d', '');
+        if (currentOrder[0] === 0 && currentOrder[1] === 1 && currentOrder[2] === 2) {
+          feedbackDesc.innerHTML = `並べ替えを行っていない標準順序です。<br>中学の「項」の計算も、小学の「左から計算」も、正しく <strong>${correctVal}</strong> になります。`;
         } else {
-            const y = 115;
-            const midX = (startPx + endPx) / 2;
-            const dist = Math.abs(endPx - startPx);
-            const height = Math.min(dist * 0.45, 120);
-            const midY = y - height;
-            
-            jumpArc.setAttribute('d', `M ${startPx} ${y} Q ${midX} ${midY} ${endPx} ${y}`);
-            
-            const length = jumpArc.getTotalLength();
-            jumpArc.style.transition = 'none';
-            jumpArc.style.strokeDasharray = length + ' ' + length;
-            jumpArc.style.strokeDashoffset = length;
-            jumpArc.getBoundingClientRect(); 
-            jumpArc.style.transition = 'stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
-            jumpArc.style.strokeDashoffset = '0';
-            jumpArc.setAttribute('marker-end', 'url(#arrowhead)');
+          feedbackDesc.innerHTML = `【奇跡の一致！】数字の並べ替え順序が、小学校側の固定された記号と偶然噛み合いました！<br>しかし、並び順を別のものにシャッフルするとすぐに答えが変わってしまいます。実験してみましょう！`;
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+          playSound('success');
         }
+        diffBadge.textContent = `答え: ${resultB} (一致中)`;
+        diffBadge.style.color = '#34d399';
+      } else {
+        feedbackPanel.className = 'feedback-section error';
+        feedbackIcon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+        feedbackTitle.textContent = '小学校側でバグ発生！答えが変わってしまいました！💥';
+        feedbackDesc.innerHTML = `中学校の「項カード」はどんな順番でも答えが <strong>${correctVal}</strong> ですが、<br>小学校の「数字の入れ替え」では演算記号との結びつきが崩れ、答えが <strong>${resultB}</strong> に変わってしまいました！<br>符号ごとカードに包む「項」の大切さが分かりますね！`;
+        
+        const diff = resultB - correctVal;
+        diffBadge.textContent = `本来の答えとのズレ: ${diff > 0 ? '+' : ''}${diff}`;
+        diffBadge.style.color = '#f43f5e';
+        playSound('error-alert');
+      }
     }
 
-    window.addEventListener('resize', updateLine);
-    updateLine(); 
+    // ----------------------------------------------------
+    // タブ2: 掛け算（空間反転）ロジック
+    // ----------------------------------------------------
+    function updateMultSimulation() {
+      if(!document.getElementById('tab-multiply').classList.contains('active')) return;
 
-    // --- シミュレーター2 (プレート合成) ---
-    let availablePlates = [
-        { id: 1, val: 3 }, { id: 2, val: -5 }, { id: 3, val: 7 },
-        { id: 4, val: 0 }, { id: 5, val: 1 }, { id: 6, val: -4 } // 初期値にも0を1つ入れてみました
-    ];
-    let activePlates = [];
-    let draggedPlateIndex = null; 
+      const multValA = document.getElementById('multValA');
+      const multOperator = document.getElementById('multOperator');
+      const eqDisplay = document.getElementById('multEquationDisplay');
+      const visualBar = document.getElementById('multVisualBar');
+      const commentaryText = document.getElementById('multCommentaryText');
 
-    const availableContainer = document.getElementById('available-container');
-    const activeContainer = document.getElementById('active-container');
-    const resultFormula = document.getElementById('result-formula');
+      const a = parseInt(multValA.value);
+      const op = multOperator.value;
+      
+      let htmlBlocks = '';
+      let scaleX = 1;
+      let eqText = '';
+      let comment = '';
 
-    function renderPlates() {
-        availableContainer.innerHTML = '';
-        activeContainer.innerHTML = '';
-
-        if (availablePlates.length === 0) {
-            availableContainer.innerHTML = '<div class="empty-msg">すべてのプレートが実験台にあります</div>';
-        } else {
-            availablePlates.forEach(p => availableContainer.appendChild(createPlateElement(p, true)));
+      if (op === 'double-minus') {
+        eqText = `(-${a}) × (-1) = <span class="mult-eq-res">+${a}</span>`;
+        for(let i=0; i<a; i++) {
+          htmlBlocks += `<div class="block" style="background-color: var(--color-error); color: white;">-1</div>`;
         }
+        
+        // 再反転のアニメーション演出
+        setTimeout(() => {
+          visualBar.style.transform = 'scaleX(1)';
+          document.querySelectorAll('#multVisualBar .block').forEach(b => {
+            b.style.backgroundColor = 'var(--color-primary)';
+            b.innerText = '+1';
+            b.style.transform = 'scale(1.05)';
+          });
+          setTimeout(() => {
+            document.querySelectorAll('#multVisualBar .block').forEach(b => b.style.transform = 'scale(1)');
+          }, 300);
+        }, 100);
+        
+        comment = `すでに0の左側（マイナスの世界）に展開していた赤いバーに対し、<b>さらに「-1」という反転スイッチを掛け合わせました。</b><br>
+        この瞬間、鏡の世界がさらに裏返り、元の右側（プラスの世界）のエリアへと舞い戻ってきます！これが、言葉のトリックではない<b>「マイナス × マイナス ＝ プラス」</b>の本質的なメカニズム（空間の再反転）です。`;
+        
+        confetti({ particleCount: 50, spread: 40, origin: { y: 0.6 } });
+        playSound('success');
 
-        if (activePlates.length === 0) {
-            activeContainer.innerHTML = '<div class="empty-msg">ここにプレートを置いて式を作ります</div>';
-            resultFormula.innerHTML = '<span style="font-size: 1.5rem; color: #64748b; font-weight: normal;">プレートを合成するとここに式が表示されます</span>';
-        } else {
-            activePlates.forEach(p => activeContainer.appendChild(createPlateElement(p, false)));
-            updateFormula();
+      } else {
+        const multiplier = parseInt(op);
+        const result = a * multiplier;
+        const resSign = result > 0 ? '+' : '';
+        eqText = `${a} × (${multiplier > 0 ? '+' : ''}${multiplier}) = <span class="mult-eq-res">${resSign}${result}</span>`;
+
+        for(let i=0; i<a; i++) {
+          htmlBlocks += `<div class="block" style="background-color: var(--color-primary); color: white;">+1</div>`;
         }
+        
+        scaleX = multiplier;
+
+        setTimeout(() => {
+          visualBar.style.transform = `scaleX(${scaleX})`;
+          if (multiplier < 0) {
+            document.querySelectorAll('#multVisualBar .block').forEach(b => {
+              b.style.backgroundColor = 'var(--color-error)';
+              b.innerText = '-1';
+            });
+          }
+        }, 50);
+
+        if (multiplier === 1) {
+          comment = `「+1」を掛けるという行為は、空間の広がりや向きに一切影響を与えません。<br>青い「+1」のブロックが、基準の長さそのままの状態で右側の空間（プラス領域）に維持されます。`;
+          playSound('swap');
+        } else if (multiplier === -1) {
+          comment = `「-1」を掛けた瞬間、<b>原点「0」の境界線を軸にして、右側の空間がペタッと左側へ1回反転</b>します。<br>
+          バーの長さ（絶対値）そのものは変化していませんが、空間全体が裏返ったため、すべてのブロックがマイナスの属性（赤いブロック）に変化して左側へ展開されます。`;
+          playSound('shuffle');
+        } else if (multiplier === -2) {
+          comment = `「-2」を掛けました。ここには2つの魔法が同時に発生しています。<br>
+          ①「2」の力によって、基準となるバーの長さ（絶対値）が<b>2倍に引き伸ばされます。</b><br>
+          ②「マイナス」の力によって、引き伸ばされた空間が<b>0を軸にクルッと反転します。</b><br>
+          結果として、左側の負の領域に2倍の長さを持った赤いバーが出現します。`;
+          playSound('error-alert');
+        }
+      }
+
+      visualBar.innerHTML = htmlBlocks;
+      eqDisplay.innerHTML = eqText;
+      multCommentaryText.innerHTML = comment;
     }
 
-    function createPlateElement(plate, isAvailable) {
-        const div = document.createElement('div');
-        
-        // ★修正：0の場合はクラスを 'zero' にする
-        let colorClass = 'zero';
-        if (plate.val > 0) colorClass = 'positive';
-        else if (plate.val < 0) colorClass = 'negative';
-        div.className = `plate ${colorClass}`;
-        
-        if (!isAvailable) div.classList.add('draggable');
-        
-        // --- タップで移動 ---
-        div.onclick = (e) => {
-            if (e.target.tagName.toLowerCase() === 'input') return; 
-            
-            const rect = div.getBoundingClientRect();
-            
-            // ★修正：0の場合はパーティクルも灰色にする
-            let particleColor = '#94a3b8';
-            if (plate.val > 0) particleColor = '#3b82f6';
-            else if (plate.val < 0) particleColor = '#f43f5e';
-            
-            spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, particleColor);
-
-            if (isAvailable) {
-                availablePlates = availablePlates.filter(p => p.id !== plate.id);
-                activePlates.push(plate);
-            } else {
-                activePlates = activePlates.filter(p => p.id !== plate.id);
-                availablePlates.push(plate);
-            }
-            renderPlates();
-        };
-
-        // --- ドラッグ＆ドロップで並べ替え ---
-        if (!isAvailable) {
-            div.draggable = true;
-            div.title = "ドラッグで順番を入れ替え";
-
-            div.addEventListener('dragstart', (e) => {
-                draggedPlateIndex = activePlates.indexOf(plate);
-                setTimeout(() => div.style.opacity = '0.3', 0); 
-                e.dataTransfer.effectAllowed = 'move';
-            });
-
-            div.addEventListener('dragover', (e) => {
-                e.preventDefault(); 
-                e.dataTransfer.dropEffect = 'move';
-                div.style.transform = 'scale(1.1)'; 
-            });
-
-            div.addEventListener('dragleave', (e) => {
-                div.style.transform = '';
-            });
-
-            div.addEventListener('dragend', () => {
-                div.style.opacity = '1';
-                div.style.transform = '';
-                draggedPlateIndex = null;
-            });
-
-            div.addEventListener('drop', (e) => {
-                e.preventDefault();
-                div.style.transform = '';
-                if (draggedPlateIndex === null) return;
-                
-                const targetIndex = activePlates.indexOf(plate);
-                if (draggedPlateIndex !== targetIndex) {
-                    const movedPlate = activePlates.splice(draggedPlateIndex, 1)[0];
-                    activePlates.splice(targetIndex, 0, movedPlate);
-                    
-                    const rect = div.getBoundingClientRect();
-                    spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2, '#fbbf24'); 
-                    
-                    renderPlates();
-                }
-            });
-        }
-
-        const valDiv = document.createElement('div');
-        valDiv.className = 'plate-val';
-        valDiv.innerText = plate.val;
-        div.appendChild(valDiv);
-
-        const input = document.createElement('input');
-        input.type = 'number';
-        input.value = plate.val;
-        input.onchange = (e) => {
-            const newVal = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-            if (isAvailable) {
-                const target = availablePlates.find(p => p.id === plate.id);
-                if (target) target.val = newVal;
-            } else {
-                const target = activePlates.find(p => p.id === plate.id);
-                if (target) target.val = newVal;
-            }
-            renderPlates();
-        };
-        div.appendChild(input);
-
-        return div;
-    }
-
-    function updateFormula() {
-        let sum = 0;
-        let formulaHtml = '';
-
-        activePlates.forEach((p, index) => {
-            sum += p.val;
-            let displayVal = p.val < 0 ? `(${p.val})` : p.val;
-            formulaHtml += `<span>${displayVal}</span>`;
-            
-            if (index < activePlates.length - 1) {
-                formulaHtml += `<span class="operator-plus">+</span>`;
-            }
-        });
-
-        formulaHtml += `<span class="operator-equal">=</span>`;
-        formulaHtml += `<span class="final-sum">${sum}</span>`;
-        
-        resultFormula.innerHTML = formulaHtml;
-    }
-
-    renderPlates();
-</script>
-
+    // 初期起動時のバインド
+    window.addEventListener('DOMContentLoaded', () => {
+      updateSimulation();
+    });
+  </script>
 </body>
 </html>
